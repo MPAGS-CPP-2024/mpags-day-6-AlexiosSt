@@ -19,11 +19,23 @@ int main(int argc, char* argv[])
     ProgramSettings settings{false, false, "", "", {}, {}, CipherMode::Encrypt};
 
     // Process command line arguments
-    const bool cmdLineStatus{processCommandLine(cmdLineArgs, settings)};
-
-    // Any failure in the argument processing means we can't continue
-    // Use a non-zero return value to indicate failure
-    if (!cmdLineStatus) {
+    try {
+        processCommandLine(cmdLineArgs, settings);
+    }
+    catch ( const MissingArgument& e ) {
+        std::cerr << "[error] Missing argument: " << e.what() << std::endl;
+        return 1;
+    }
+    catch ( const UnknownArgument& e ) {
+        std::cerr << "[error] Unknown argument: " << e.what() << std::endl;
+        return 1;
+    }
+    catch ( const InvalidArgument& e ) {
+        std::cerr << "[error] Invalid argument: " << e.what() << std::endl;
+        return 1;
+    }
+    catch ( const InconsistentArguments& e ) {
+        std::cerr << "[error] Inconsistent argument: " << e.what() << std::endl;
         return 1;
     }
 
@@ -33,23 +45,21 @@ int main(int argc, char* argv[])
         std::cout
             << "Usage: mpags-cipher [-h/--help] [--version] [-i <file>] [-o <file>] [-c <cipher>] [-k <key>] [--encrypt/--decrypt]\n\n"
             << "Encrypts/Decrypts input alphanumeric text using classical ciphers\n\n"
-            << "Available options:\n\n"
-            << "  -h|--help        Print this help message and exit\n\n"
-            << "  --version        Print version information\n\n"
+            << "Available options:\n"
+            << "  -h|--help        Print this help message and exit\n"
+            << "  --version        Print version information\n"
             << "  -i FILE          Read text to be processed from FILE\n"
-            << "                   Stdin will be used if not supplied\n\n"
+            << "                   Stdin will be used if not supplied\n"
             << "  -o FILE          Write processed text to FILE\n"
-            << "                   Stdout will be used if not supplied\n\n"
-            << "                   Stdout will be used if not supplied\n\n"
+            << "                   Stdout will be used if not supplied\n"
             << "  --multi-cipher N Specify the number of ciphers to be used in sequence\n"
-            << "                   N should be a positive integer - defaults to 1"
+            << "                   N should be a positive integer - defaults to 1\n"
             << "  -c CIPHER        Specify the cipher to be used to perform the encryption/decryption\n"
-            << "                   CIPHER can be caesar, playfair, or vigenere - caesar is the default\n\n"
+            << "                   CIPHER can be caesar, playfair, or vigenere - caesar is the default\n"
             << "  -k KEY           Specify the cipher KEY\n"
-            << "                   A null key, i.e. no encryption, is used if not supplied\n\n"
-            << "  --encrypt        Will use the cipher to encrypt the input text (default behaviour)\n\n"
-            << "  --decrypt        Will use the cipher to decrypt the input text\n\n"
-            << std::endl;
+            << "                   A null key, i.e. no encryption, is used if not supplied\n"
+            << "  --encrypt        Will use the cipher to encrypt the input text (default behaviour)\n"
+            << "  --decrypt        Will use the cipher to decrypt the input text\n";
         // Help requires no further action, so return from main
         // with 0 used to indicate success
         return 0;
@@ -94,6 +104,7 @@ int main(int argc, char* argv[])
     std::vector<std::unique_ptr<Cipher>> ciphers;
     std::size_t nCiphers{settings.cipherType.size()};
     ciphers.reserve(nCiphers);
+    std::cout<<"OK! We will run with "<<nCiphers<<" cipher(s).\n";
     for (std::size_t iCipher{0}; iCipher < nCiphers; ++iCipher) {
         ciphers.push_back(CipherFactory::makeCipher(
             settings.cipherType[iCipher], settings.cipherKey[iCipher]));

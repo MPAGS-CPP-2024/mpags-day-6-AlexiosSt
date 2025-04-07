@@ -13,18 +13,20 @@ CaesarCipher::CaesarCipher(const std::string& key) : key_{0}
     // We have the key as a string, but the Caesar cipher needs an unsigned long, so we first need to convert it
     // We default to having a key of 0, i.e. no encryption, if no (valid) key was provided on the command line
     if (!key.empty()) {
-        // Before doing the conversion we should check that the string contains a
-        // valid positive integer.
+        if(key.front()=='-'){
+            std::cerr<<"[error] The caesar cipher key must be an unsigned long integer!! Change to default (0)!\n";
+            return;
+        }
         try{
             key_ = std::stoul(key) % Alphabet::size;
         }
         catch(std::invalid_argument& e){
-            std::cerr<<"[error] The key ("<<key<<") you gave me is not a number!! Change to default (5)!\n";
-            key_=5;
+            std::cerr<<"[error] The key ("<<key<<") you gave me is not a number!! Change to default (0)!\n";
+            return;
         }
         catch(std::out_of_range& e){
-            std::cerr<<"[error] The key ("<<key<<") number is too large for ulong!! Change to default (5)!\n";
-            key_=5;
+            std::cerr<<"[error] The key ("<<key<<") number is too large for ulong!! Change to default (0)!\n";
+            return;
         }
     }
 }
